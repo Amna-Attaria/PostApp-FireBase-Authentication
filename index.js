@@ -48,27 +48,6 @@ let signUp = async () => {
         alert("Password must be at least 6 characters long and include at least one uppercase letter, one lowercase letter, and one number.");
         return;
     }
-
-    // try {
-    //     // Create user in Firebase Auth
-    //     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    //     const user = userCredential.user;
-
-    //     // Add user data to Firestore
-    //     const docRef = await addDoc(collection(db, "users"), {
-    //         ...userData,
-    //         uId: user.uid  // Fixed from `user.uId` to `user.uid`
-    //     });
-
-    //     console.log("Document written with ID:", docRef.id);
-    //     alert("Signup Successful");
-    //     // window.location.href = "signin.html"; // Redirect to sign-in page after successful sign-up
-    // } catch (error) {
-    //     console.error("Error:", error.message);
-    //     alert("Error: " + error.message);
-    // }
-
-//  -----------------set doc---------
 try {
     // Sign up the user and get the user object
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -164,7 +143,7 @@ let signout = () => {
 };
 
 // Add event listener to Sign Out button
-let sign_out = document.getElementById("logout");
+let sign_out = document.getElementById("LogOut");
 if (sign_out) {
     sign_out.addEventListener("click", signout);
 }
@@ -211,10 +190,6 @@ let getData = async()=>
     });
 }
 getData()
-// const Update = document.getElementById("update");
-// if (googleBtn) {
-//     Update.addEventListener("click", UpdateProfile);
-// }
 
 document.addEventListener("DOMContentLoaded", () => {
     const Update = document.getElementById("update");
@@ -308,16 +283,20 @@ let post = () => {
 
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                const timeString = data.time ? data.time.toDate() : "No Timestamp";
+                const timeString = data.time ? data.time.toDate().toLocaleString() : "No Timestamp";
+                const currentUser = auth.currentUser;
+                const userName = currentUser && currentUser.displayName 
+                let backgroundImg = document.getElementsByClassName("bg-img")[1].src ;
+
                 post_data.innerHTML += `
                     <div class="card p-2 mb-2" data-id="${doc.id}">
                         <div class="card-header d-flex">
                             <div class="name-time d-flex flex-column">
-                                Anonymous User
+                               ${userName}
                                 <div class="time">${timeString}</div>
                             </div>
                         </div>
-                        <div style="background-color: lightgray;" class="card-body">
+                        <div style="background-image: url(${backgroundImg})" class="card-body">
                             <blockquote class="blockquote mb-0">
                                 <p class="title">${data.title}</p>
                                 <footer class="blockquote-footer description">${data.desc}</footer>
@@ -325,92 +304,172 @@ let post = () => {
                         </div>
                         <div class="card-footer d-flex justify-content-end">
                             <button type="button" class="ms-2 btn editBtn">Edit</button>
-                            <button type="button" class="ms-2 btn btn-danger" id="deleteBtn">Delete</button>
+                            <button type="button" class="ms-2 btn btn-danger deleteBtn">Delete</button>
                         </div>
                     </div>`;
-
-                // Attach event listener to the "Edit" button
-                const editBtn = post_data.querySelectorAll(".editBtn");
-                editBtn.forEach(button => {
-                    button.addEventListener("click", (e) => {
-                        const postId = e.target.closest('.card').getAttribute('data-id');
-                        const cardElement = e.target.closest('.card');
-                        const currentTitle = cardElement.querySelector('.title').innerText;
-                        const currentDesc = cardElement.querySelector('.description').innerText;
-
-                        // Fill the edit form with current values
-                        document.getElementById("title").value = currentTitle;
-                        document.getElementById("description").value = currentDesc;
-
-                        // Attach the update function to the update button
-                        let updateButton = document.getElementById("update_post");
-                        if (updateButton) {
-                            updateButton.onclick = () => UpdatePost(postId, currentTitle, currentDesc, cardElement);
-                        }
-                    });
-                });
             });
+            
+
+            // Attach event listeners for delete and edit buttons
+            attachEventListeners();
+       
         });
 
         return unsubscribe;
     } catch (error) {
-        console.error("Error fetching posts: ", error);
+        console.error("Error fetching posts:", error);
     }
 };
 
-// Update the post in Firestore and update the UI
-let UpdatePost = async (postId, currentTitle, currentDesc, cardElement) => {
-    let title = document.getElementById("title").value || currentTitle;
-    let desc = document.getElementById("description").value || currentDesc;
+const attachEventListeners = () => {
+    const post_data = document.getElementById("post_data");
+
+    // Delete functionality
+    post_data.addEventListener("click", async (e) => {
+        if (e.target && e.target.classList.contains("deleteBtn")) {
+            const postId = e.target.closest('.card').getAttribute('data-id');
+            if (postId) {
+                try {
+                    await deleteDoc(doc(db, "Post", postId)); // Delete from Firestore
+                    alert("Post deleted successfully");
+                } catch (error) {
+                    console.error("Error deleting document:", error);
+                    alert("Error deleting the post");
+                }
+            } else {
+                alert("Post ID not found!");
+            }
+        }
+    });
+
+    // Edit functionality
+    post_data.addEventListener("click", (e) => {
+        if (e.target && e.target.classList.contains("editBtn")) {
+            const postId = e.target.closest('.card').getAttribute('data-id');
+            const cardElement = e.target.closest('.card');
+            const currentTitle = cardElement.querySelector('.title').innerText;
+            const currentDesc = cardElement.querySelector('.description').innerText;
+
+            // Fill the edit form with current values
+            document.getElementById("title").value = currentTitle;
+            document.getElementById("description").value = currentDesc;
+
+            // Attach the update function to the update button
+            let updateButton = document.getElementById("update_post");
+            if (updateButton) {
+                updateButton.onclick = () => UpdatePost(postId, cardElement);
+            }
+        }
+    });
+};
+
+// Update the post in Firestore and UI
+let UpdatePost = async (postId, cardElement) => {
+    let title = document.getElementById("title").value;
+    let desc = document.getElementById("description").value;
 
     if (auth.currentUser) {
         try {
             // Get a reference to the specific post document in Firestore
             const postRef = doc(db, "Post", postId);
-            await updateDoc(postRef, { 
+            await updateDoc(postRef, {
                 title,
-                desc, 
-                time: serverTimestamp(),  // Optionally update the timestamp
+                desc,
+                time: serverTimestamp(), // Optionally update the timestamp
             });
 
             alert("Post updated successfully");
 
-            // After updating in Firestore, update the UI immediately for the same post
+            // After updating in Firestore, update the UI immediately
             const titleElement = cardElement.querySelector('.title');
             const descElement = cardElement.querySelector('.description');
 
-            // Update the title and description on the card
             if (titleElement && descElement) {
-                titleElement.innerText = title;  // Update the title
-                descElement.innerText = desc;  // Update the description
+                titleElement.innerText = title; // Update title in UI
+                descElement.innerText = desc; // Update description in UI
             }
-        } catch (e) {
-            console.error("Error updating document:", e);
+        } catch (error) {
+            console.error("Error updating document:", error);
+            alert("Error updating the post");
         }
     } else {
         alert("You must be signed in to update a post.");
     }
+};
 
-    let deleteAccount=async()=>
-        {
-            button.addEventListener("click", (e) => {
-                // Log to ensure the postId is being fetched correctly
-                const postId = e.target.closest('.card').getAttribute('data-id');
-                console.log("Post ID to delete:", postId);  // Debugging line
-        
-                if (postId) {
-                    deletePost(postId);  // Call deletePost function with postId
-                } else {
-                    console.error("Post ID is missing!");
-                }
-            });
-        }
-        
-        let deleteButton = document.getElementById("deleteBtn");
-        if (deleteButton) {
-            deleteButton.addEventListener("click", deleteAccount);
-        }
-   
-}
-
+// Initialize post function
 post();
+
+// Clodnary image 
+
+document.addEventListener("DOMContentLoaded", () => {
+    const profilePhotoImg = document.getElementById("profilePhotoImg");
+    const profilePhotoInput = document.getElementById("profilePhotoInput");
+    // const backgroundImage = document.get("");
+
+    if (profilePhotoImg && profilePhotoInput) {
+      profilePhotoImg.addEventListener("click", (e) => {
+        profilePhotoInput.click(); // Trigger the file input click event
+        e.preventDefault();
+      });
+
+      profilePhotoInput.addEventListener("change", (e) => {
+        handleFiles(e.target.files); // Call handleFiles on file selection
+      });
+    }
+
+    // Handle selected files
+    function handleFiles(files) {
+      for (let i = 0; i < files.length; i++) {
+        uploadFile(files[i]); // Call the function to upload the file
+      }
+    }
+
+    // Upload file to Cloudinary
+    function uploadFile(file) {
+      const cloudName = 'dww5bcgco';
+      const unsignedUploadPreset = 'luucveoc';
+      const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+      const fd = new FormData();
+
+      // Check if the file is an image before uploading
+      if (file.type.startsWith('image/')) {
+        fd.append('upload_preset', unsignedUploadPreset);
+        fd.append('file', file);
+
+        console.log('Uploading file:', file);
+
+        fetch(url, { method: 'POST', body: fd })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Failed to upload file');
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log('Upload response:', data);
+
+            if (data.secure_url) {
+              // Set the uploaded image URL to the profile image
+              profilePhotoImg.src = data.secure_url;
+            } else {
+              console.error('No secure_url in response:', data);
+            }
+          })
+          .catch((error) => {
+            console.error('Error uploading the file:', error);
+          });
+      } else {
+        console.error('Selected file is not an image.');
+      }
+    }
+  });
+
+
+  
+  
+  
+
+
+  
+

@@ -13,104 +13,28 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <!-- <div id="signUpFormContainer" class="card p-4" style="width: 30rem">
-      <h2 class="text text-center">
-        <img class="logo" src="Images/logo1.png" alt="">
-        Sign Up Form</h2>
-      <form id="signUpForm">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label for="inputFirstName" class="form-label">First name</label>
-            <input
-              required
-              type="text"
-              class="form-control"
-              id="inputFirstName"
-            />
-          </div>
-          <div class="col-md-6">
-            <label for="inputLastName" class="form-label">Last name</label>
-            <input
-              required
-              type="text"
-              class="form-control"
-              id="inputLastName"
-            />
-          </div>
-
-          <div class="col-md-6">
-            <label for="inputEmail4" class="form-label">Email</label>
-            <input
-              required
-              type="email"
-              class="form-control"
-              id="inputEmail4"
-            />
-          </div>
-          <div class="col-md-6">
-            <label for="inputPassword4" class="form-label">Password</label>
-            <input
-              required
-              type="password"
-              class="form-control"
-              id="inputPassword4"
-            />
-          </div>
-          <div class="col-12">
-            <label for="inputNumber" class="form-label">Phone</label>
-            <input
-              required
-              type="number"
-              class="form-control"
-              id="inputAddress"
-              placeholder="####-######"
-            />
-          </div>
-
-          <div class="col-md-6">
-            <label for="inputCity" class="form-label">City</label>
-            <input required type="text" class="form-control" id="inputCity" />
-          </div>
-
-          <div class="col-12">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="gridCheck"
-              />
-              <label class="form-check-label" for="gridCheck">
-                Check me out
-              </label>
-            </div>
-          </div>
-          <div class="col-12">
-            <button type="submit" class="btn bg-color text-white">
-              Sign in
-            </button>
-          </div>
-        </div>
-      </form>
-    </div> -->
     <div id="postApp" >
       <nav class="navbar bg-body-tertiary">
         <div class="container-fluid">
           <a class="navbar-brand" href="#">
-            <img class="logo" src="Images/logo2.png" alt="">Post App</a>
-          <div class="profile-photo">
-            <!-- <img
+            <img class="logo" src="Images/logo2.png" alt="">Post App
+          </a>
+          <div class="profile-photo" id="gallery">
+            <!-- Profile Image -->
+            <img
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Default_pfp.svg/2048px-Default_pfp.svg.png"
               id="profilePhotoImg"
               alt="Profile Photo"
-            /> -->
+              style="cursor: pointer;"
+            />
+            
+            <!-- Hidden File Input for Profile Image Upload -->
             <input
               type="file"
               id="profilePhotoInput"
               accept="image/*"
-              style="display: none"
             />
           </div>
-        </div>
       </nav>
       <div class="container-fluid">
         <div class="row">
@@ -139,25 +63,25 @@
                 <div class="mt-3">
                   <div class="images d-flex">
                     <img
-
+                    onclick="selectImg('./Images/1.jfif')"
                       src="Images/1.jfif"
                       class="bg-img"
                       alt=""
                     />
                     <img
-    
+                    onclick="selectImg('./Images/2.jfif')"
                       src="Images/2.jfif"
                       class="bg-img"
                       alt=""
                     />
                     <img
-           
+                    onclick="selectImg('./Images/3.jfif')"
                       src="Images/3.jfif"
                       class="bg-img"
                       alt=""
                     />
                     <img
-               
+                    onclick="selectImg('./Images/4.jfif')"
                       src="Images/4.jfif"
                       class="bg-img"
                       alt=""
@@ -173,7 +97,8 @@
 
                 <div class="mt-3">
                   <button class="btn postBtn"   id="button" >Post</button>
-                  <button  class="btn " id="update_post">Update Post</button>
+                  <button  class="btn postBtn ms-5 me-5" id="update_post">Update Post</button>
+                  <button  class="btn postBtn ms-5 me-5" id="LogOut">LogOut</button>
                 </div>
               </div>
             </div>
@@ -189,8 +114,19 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
-
     <script src="firebase.js" type="module"></script>
     <script src="index.js" type="module"></script>
+    <script>
+ function selectImg(src) {
+  backgroundImg = src;
+  var bgImg = document.getElementsByClassName("bg-img");
+
+  for (var i = 0; i < bgImg.length; i++) {
+    bgImg[i].className = "bg-img";
+  }
+  event.target.className += " selectedImg";
+}
+
+    </script>
   </body>
 </html>
